@@ -1,14 +1,12 @@
 //!
 #![warn(missing_debug_implementations, rust_2018_idioms, missing_docs)]
 
-use std::collections::{HashMap, HashSet};
-
 use actix::prelude::*;
 use actix_cors::Cors;
 use actix_files::Files;
 use actix_web::middleware::Logger;
 use actix_web::{web, App, HttpServer};
-use uuid::Uuid;
+use sqlx::PgPool;
 
 mod elections;
 mod errors;
@@ -22,18 +20,21 @@ async fn main() -> anyhow::Result<(), anyhow::Error> {
 }
 
 pub(crate) struct State {
-    election: elections::Election,
     ws: Addr<elections::ElectionServer>,
+    db: PgPool,
 }
 
 async fn init() -> std::io::Result<()> {
     env_logger::init();
 
-    // let job_server = jobs::JobServer::new().start();
+    let db = PgPool::connect("postgres://jkzomaar:secret@127.0.0.1/jkzomaar")
+        .await
+        .expect("Unable to connect to database");
+
     HttpServer::new(move || {
         let state = State {
-            election: elections::Election::new(),
             ws: elections::ElectionServer::new().start(),
+            db: db.clone(),
         };
 
         App::new()

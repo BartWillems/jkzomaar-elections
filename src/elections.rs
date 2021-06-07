@@ -1,101 +1,107 @@
-use std::collections::{HashMap, HashSet};
+use std::collections::{HashMap};
 
 use actix::prelude::*;
 use actix_web::web::{Data, Json, Path};
-use actix_web::{get, post, web, HttpResponse, Responder};
+use actix_web::{get, post, web, HttpResponse};
 use rand::{self, rngs::ThreadRng, Rng};
 use serde::{Deserialize, Serialize};
-use tokio::sync::Mutex;
+use sqlx::{PgPool};
 use uuid::Uuid;
 
 use crate::errors::ElectionError;
 
-pub(crate) struct Election {
-    inner: Mutex<InnerElection>,
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct Ballot {
+    id: Uuid,
+    cast_time: Option<time::OffsetDateTime>,
 }
 
-impl Election {
-    pub(crate) fn new() -> Self {
-        Self {
-            inner: Mutex::new(InnerElection {
-                ballots: HashSet::new(),
-                candidates: HashSet::new(),
-                votes: HashMap::new(),
-            }),
-        }
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct Vote {
+    ballot_id: Uuid,
+    voorzitter: String,
+    ondervoorzitter: String,
+    penning_meester: String,
+    secretaris: String,
+}
+
+impl Ballot {
+    async fn create(pool: &PgPool) -> Result<Self, sqlx::Error> {
+        sqlx::query_as!(
+            Ballot,
+            "INSERT INTO ballots (id) VALUES (uuid_generate_v4()) RETURNING *"
+        )
+        .fetch_one(pool)
+        .await
     }
 
-    pub(crate) async fn create_ballot(&self) -> Result<Uuid, ElectionError> {
-        let mut inner = self.inner.lock().await;
-        let uuid = Uuid::new_v4();
-        match inner.ballots.insert(uuid) {
-            true => Ok(uuid),
-            false => Err(ElectionError::DuplicateBallotCreation),
-        }
+    /// Cast the vote, consuming it and setting the cast time, thus preventing it from re-use
+    async fn cast(vote: &Vote, pool: &PgPool) -> Result<Vote, ElectionError> {
+        let tx = pool.begin().await?;
+
+        let vote = sqlx::query_as!(
+            Vote, 
+            r#"INSERT INTO votes (ballot_id, voorzitter, ondervoorzitter, penning_meester, secretaris)
+            VALUES ($1, $2, $3, $4, $5)
+            RETURNING *"#,
+            vote.ballot_id, vote.voorzitter, vote.ondervoorzitter, vote.penning_meester, vote.secretaris,
+        ).fetch_one(pool).await?;
+
+        sqlx::query!("UPDATE ballots SET cast_time = NOW() WHERE id=$1", vote.ballot_id).execute(pool).await?;
+
+        tx.commit().await?;
+
+        Ok(vote)
     }
 
-    pub(crate) async fn vote(&self, id: Uuid, candidate: String) -> Result<(), ElectionError> {
-        let mut inner = self.inner.lock().await;
+    /// Load a ballot, if it's already used, return an invalid balid error
+    async fn load(id: &Uuid, pool: &PgPool) -> Result<Self, ElectionError> {
+        let ballot = sqlx::query_as!(Ballot, "SELECT * FROM ballots WHERE id=$1", id).fetch_one(pool).await?;
 
-        if !inner.ballots.contains(&id) {
-            return Err(ElectionError::InvalidUuid);
+        if ballot.cast_time.is_some() {
+            return Err(ElectionError::AlreadyVoted)
         }
-
-        if !inner.candidates.contains(&candidate) {
-            return Err(ElectionError::InvalidCandidate);
-        }
-
-        if inner.votes.contains_key(&id) {
-            return Err(ElectionError::AlreadyVoted);
-        }
-
-        inner.votes.insert(id, candidate);
-
-        Ok(())
+        Ok(ballot)
     }
 }
 
-struct InnerElection {
-    /// available ballots
-    ballots: HashSet<Uuid>,
-    /// Possible candidates
-    candidates: HashSet<String>,
-    /// Pool of cast ballots
-    votes: HashMap<Uuid, String>,
-}
 
 #[post("/ballots")]
 async fn create_ballot(
     state: Data<crate::State>,
 ) -> Result<actix_web::HttpResponse, ElectionError> {
-    let uuid = state.election.create_ballot().await?;
+    let ballot = Ballot::create(&state.db).await?;
 
-    Ok(HttpResponse::Created().json(uuid))
+    Ok(HttpResponse::Created().json(ballot))
 }
 
-#[post("/ballots/{uuid}")]
-async fn vote(
-    uuid: Path<Uuid>,
-    candidate: Json<String>,
+#[post("/vote")]
+async fn cast_vote(
+    vote: Json<Vote>,
     state: Data<crate::State>,
 ) -> Result<actix_web::HttpResponse, ElectionError> {
-    state
-        .election
-        .vote(uuid.into_inner(), candidate.into_inner())
-        .await?;
+    let vote = Ballot::cast(&vote, &state.db).await?;
 
-    Ok(HttpResponse::Created().json("Great Success!"))
+    if let Err(e) = state.ws.send(NewVote).await {
+        log::error!("Unable to notify new vote: {:?}", e);
+    }
+
+    Ok(HttpResponse::Created().json(vote))
 }
 
 /// This should be used to display the candidate list to the user
 #[get("/ballots/{uuid}")]
-async fn show_ballot(uuid: Path<Uuid>) -> Result<actix_web::HttpResponse, ElectionError> {
-    todo!();
+async fn show_ballot(uuid: Path<Uuid>, state: Data<crate::State>,) -> Result<actix_web::HttpResponse, ElectionError> {
+    let ballot = Ballot::load(&uuid, &state.db).await?;
+
+    Ok(HttpResponse::Ok().json(ballot))
 }
 
 pub(crate) fn routes(cfg: &mut web::ServiceConfig) {
     cfg.service(create_ballot);
-    cfg.service(vote);
+    cfg.service(cast_vote);
     cfg.service(show_ballot);
 }
 
