@@ -8,25 +8,25 @@ CREATE TABLE ballots (
 );
 
 CREATE TABLE voorzitters (
-    candidate VARCHAR PRIMARY KEY
+    name VARCHAR PRIMARY KEY
 );
 
 CREATE TABLE ondervoorzitters (
-    candidate VARCHAR PRIMARY KEY
+    name VARCHAR PRIMARY KEY
 );
 
 CREATE TABLE penning_meesters (
-    candidate VARCHAR PRIMARY KEY
+    name VARCHAR PRIMARY KEY
 );
 
 CREATE TABLE secretarissen (
-    candidate VARCHAR PRIMARY KEY
+    name VARCHAR PRIMARY KEY
 );
 
 CREATE TABLE votes (
     ballot_id uuid REFERENCES ballots(id) UNIQUE NOT NULL,
-    voorzitter VARCHAR REFERENCES voorzitters(candidate) NOT NULL,
-    ondervoorzitter VARCHAR REFERENCES ondervoorzitters(candidate) NOT NULL,
-    penning_meester VARCHAR REFERENCES penning_meesters(candidate) NOT NULL,
-    secretaris VARCHAR REFERENCES secretarissen(candidate) NOT NULL
+    voorzitter VARCHAR REFERENCES voorzitters(name) NOT NULL,
+    ondervoorzitter VARCHAR REFERENCES ondervoorzitters(name) NOT NULL,
+    penning_meester VARCHAR REFERENCES penning_meesters(name) NOT NULL,
+    secretaris VARCHAR REFERENCES secretarissen(name) NOT NULL
 );

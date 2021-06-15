@@ -1,0 +1,291 @@
+{
+  "db": "PostgreSQL",
+  "0709f5d5f44e76cb264e61d7903115c44e25724d8f504996792b915ff1b3b8b2": {
+    "query": "SELECT * FROM penning_meesters",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "name",
+          "type_info": "Varchar"
+        }
+      ],
+      "parameters": {
+        "Left": []
+      },
+      "nullable": [
+        false
+      ]
+    }
+  },
+  "1c44a7d188f96c0c2db19f7fe7b9c1ea96880e7ff74782576571c0beeeab0f8a": {
+    "query": "SELECT * FROM ballots WHERE id=$1",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "id",
+          "type_info": "Uuid"
+        },
+        {
+          "ordinal": 1,
+          "name": "cast_time",
+          "type_info": "Timestamptz"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Uuid"
+        ]
+      },
+      "nullable": [
+        false,
+        true
+      ]
+    }
+  },
+  "325fee7f8ca3c0b96c0021c2532907c675a04911e63b91fcaab442fc1d13b9c3": {
+    "query": "INSERT INTO ballots (id) VALUES (uuid_generate_v4()) RETURNING *",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "id",
+          "type_info": "Uuid"
+        },
+        {
+          "ordinal": 1,
+          "name": "cast_time",
+          "type_info": "Timestamptz"
+        }
+      ],
+      "parameters": {
+        "Left": []
+      },
+      "nullable": [
+        false,
+        true
+      ]
+    }
+  },
+  "46f10074c65d2740ebbf456944621fa552f18b06f48e8c3631025ce8c1141e61": {
+    "query": "INSERT INTO votes (ballot_id, voorzitter, ondervoorzitter, penning_meester, secretaris)\n                VALUES ($1, $2, $3, $4, $5)\n                RETURNING *",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "ballot_id",
+          "type_info": "Uuid"
+        },
+        {
+          "ordinal": 1,
+          "name": "voorzitter",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 2,
+          "name": "ondervoorzitter",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 3,
+          "name": "penning_meester",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 4,
+          "name": "secretaris",
+          "type_info": "Varchar"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Uuid",
+          "Varchar",
+          "Varchar",
+          "Varchar",
+          "Varchar"
+        ]
+      },
+      "nullable": [
+        false,
+        false,
+        false,
+        false,
+        false
+      ]
+    }
+  },
+  "4d4a45c776cd6c7e540270077afbe66910a22c9506fabd36c4f69f4e5e89e8c4": {
+    "query": "SELECT COUNT(ondervoorzitter) as \"count!\", ondervoorzitter as name FROM votes GROUP BY name",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "count!",
+          "type_info": "Int8"
+        },
+        {
+          "ordinal": 1,
+          "name": "name",
+          "type_info": "Varchar"
+        }
+      ],
+      "parameters": {
+        "Left": []
+      },
+      "nullable": [
+        null,
+        false
+      ]
+    }
+  },
+  "80d9b79206e3954c9d9e6b7fcd41ddfddce0af1baa07f1a61ec33bb78edab9f2": {
+    "query": "SELECT COUNT(penning_meester) as \"count!\", penning_meester as name FROM votes GROUP BY name",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "count!",
+          "type_info": "Int8"
+        },
+        {
+          "ordinal": 1,
+          "name": "name",
+          "type_info": "Varchar"
+        }
+      ],
+      "parameters": {
+        "Left": []
+      },
+      "nullable": [
+        null,
+        false
+      ]
+    }
+  },
+  "886e36c699699e48b578647c8a0e4282ce81d80712e076e0eda4718660d72a11": {
+    "query": "LOCK TABLE votes IN ACCESS EXCLUSIVE MODE",
+    "describe": {
+      "columns": [],
+      "parameters": {
+        "Left": []
+      },
+      "nullable": []
+    }
+  },
+  "905e445009ca529ad4c693f3613526aafcba3b7661b71acac8c0bb5a7a30b50c": {
+    "query": "UPDATE ballots SET cast_time = NOW() WHERE id=$1",
+    "describe": {
+      "columns": [],
+      "parameters": {
+        "Left": [
+          "Uuid"
+        ]
+      },
+      "nullable": []
+    }
+  },
+  "9cb152ece172320fb101d758e3b140b7aa4f1bf822f52472899b7cd22d6bd35f": {
+    "query": "SELECT * FROM secretarissen",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "name",
+          "type_info": "Varchar"
+        }
+      ],
+      "parameters": {
+        "Left": []
+      },
+      "nullable": [
+        false
+      ]
+    }
+  },
+  "9f9369722c64daec3951fa8560fdbfc3b138e0dccd71ef7dead5cc951eb3e08e": {
+    "query": "SELECT * FROM voorzitters",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "name",
+          "type_info": "Varchar"
+        }
+      ],
+      "parameters": {
+        "Left": []
+      },
+      "nullable": [
+        false
+      ]
+    }
+  },
+  "bd5732c9cdbc0518be614631a6639ab9006d8b284e3e109caebab2537a0ec08f": {
+    "query": "SELECT * FROM ondervoorzitters",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "name",
+          "type_info": "Varchar"
+        }
+      ],
+      "parameters": {
+        "Left": []
+      },
+      "nullable": [
+        false
+      ]
+    }
+  },
+  "e5cf230e9526ea0f2837e573d54825de2ced9c6cb125d3adff1b81e58dedc6c4": {
+    "query": "SELECT COUNT(voorzitter) as \"count!\", voorzitter as name FROM votes GROUP BY name",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "count!",
+          "type_info": "Int8"
+        },
+        {
+          "ordinal": 1,
+          "name": "name",
+          "type_info": "Varchar"
+        }
+      ],
+      "parameters": {
+        "Left": []
+      },
+      "nullable": [
+        null,
+        false
+      ]
+    }
+  },
+  "f1cb6fbb6069136c3e0ef9318a1475d39b4b59887df6f9c9f1891bfcb82b3fb2": {
+    "query": "SELECT COUNT(secretaris) as \"count!\", secretaris as name FROM votes GROUP BY name",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "count!",
+          "type_info": "Int8"
+        },
+        {
+          "ordinal": 1,
+          "name": "name",
+          "type_info": "Varchar"
+        }
+      ],
+      "parameters": {
+        "Left": []
+      },
+      "nullable": [
+        null,
+        false
+      ]
+    }
+  }
+}

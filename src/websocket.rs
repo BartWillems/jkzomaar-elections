@@ -20,13 +20,13 @@ const CLIENT_TIMEOUT: Duration = Duration::from_secs(10);
 pub(crate) async fn route(
     req: HttpRequest,
     stream: web::Payload,
-    srv: Data<Addr<ElectionServer>>,
+    state: Data<crate::State>,
 ) -> impl Responder {
     ws::start(
         WebsocketConnection {
             id: 0,
             hb: Instant::now(),
-            server: srv.get_ref().clone(),
+            server: state.ws.clone(),
         },
         &req,
         stream,

@@ -25,15 +25,18 @@ pub(crate) struct State {
 }
 
 async fn init() -> std::io::Result<()> {
+    dotenv::dotenv().ok();
     env_logger::init();
 
     let db = PgPool::connect("postgres://jkzomaar:secret@127.0.0.1/jkzomaar")
         .await
         .expect("Unable to connect to database");
 
+    let election_server = elections::ElectionServer::new().start();
+
     HttpServer::new(move || {
         let state = State {
-            ws: elections::ElectionServer::new().start(),
+            ws: election_server.clone(),
             db: db.clone(),
         };
 
