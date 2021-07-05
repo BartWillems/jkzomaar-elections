@@ -49,24 +49,6 @@ const ElectionResults = () => {
       setResult(res);
     };
 
-    //   if (message.NewSale) {
-    //     setSaleUpdate(message.NewSale);
-    //   }
-
-    //   if (message.ConnectionCount) {
-    //     setConnectedUsers(message.ConnectionCount);
-    //   }
-
-    //   if (message.PriceUpdate) {
-    //     refreshBeverages();
-    //     if (message.PriceUpdate === "Crash") {
-    //       setStockMarketCrash(true);
-    //     } else {
-    //       setPriceUpdate(true);
-    //     }
-    //   }
-    // };
-
     rws.onclose = (msg) => {
       console.log(msg);
       if (!msg.wasClean) {

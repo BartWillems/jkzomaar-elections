@@ -8,10 +8,9 @@ import Typography from "@material-ui/core/Typography";
 
 const useStyles = makeStyles((theme) => ({
   paper: {
-    marginTop: theme.spacing(8),
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
+    maxWidth: 1024,
+    margin: `${theme.spacing(1)}px auto`,
+    padding: theme.spacing(2),
   },
 }));
 
@@ -19,8 +18,11 @@ function App() {
   const classes = useStyles();
   return (
     <Container className={classes.paper}>
-      <Typography variant="h1" component="h2" gutterBottom>
-        JK Zomaar Verkiezingen 2021
+      <Typography variant="h2" component="h2" align="center">
+        JK Zomaar
+      </Typography>
+      <Typography variant="h4" component="h4" gutterBottom align="center">
+        Verkiezingen 2021
       </Typography>
       <Router />
     </Container>

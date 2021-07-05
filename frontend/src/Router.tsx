@@ -2,6 +2,7 @@ import React from "react";
 import { Switch, Route } from "react-router-dom";
 import VoteBooth from "./components/VoteBooth";
 import ElectionResults from "./components/ElectionResults";
+import Admin from "./components/Admin";
 
 const Router = () => {
   return (
@@ -12,6 +13,10 @@ const Router = () => {
 
       <Route path="/" exact>
         <ElectionResults />
+      </Route>
+
+      <Route path="/secret" exact>
+        <Admin />
       </Route>
 
       <Route path="*">

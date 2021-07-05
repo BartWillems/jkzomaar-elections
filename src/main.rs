@@ -48,7 +48,7 @@ async fn init() -> std::io::Result<()> {
             .service(web::resource("/ws").to(websocket::route))
             .service(mount_frontend())
     })
-    .bind("127.0.0.1:8080")?
+    .bind("0.0.0.0:8080")?
     .run()
     .await
 }
