@@ -1,4 +1,6 @@
-frontend/node_modules
-frontend/build
+frontend
 target
 docker-compose.yaml
+README.md
+.env
+.env.dist

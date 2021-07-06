@@ -3,9 +3,8 @@
 
 use actix::prelude::*;
 use actix_cors::Cors;
-use actix_files::Files;
 use actix_web::middleware::Logger;
-use actix_web::{web, App, HttpServer};
+use actix_web::{get, web, App, HttpServer};
 use sqlx::PgPool;
 
 mod elections;
@@ -24,11 +23,16 @@ pub(crate) struct State {
     db: PgPool,
 }
 
+#[get("/health")]
+async fn health() -> &'static str {
+    "ok"
+}
+
 async fn init() -> std::io::Result<()> {
     dotenv::dotenv().ok();
     env_logger::init();
 
-    let db = PgPool::connect("postgres://jkzomaar:secret@127.0.0.1/jkzomaar")
+    let db = PgPool::connect(&std::env::var("DATABASE_URL").expect("database url not set"))
         .await
         .expect("Unable to connect to database");
 
@@ -44,21 +48,14 @@ async fn init() -> std::io::Result<()> {
             .data(state)
             .wrap(Logger::default())
             .wrap(Cors::permissive().supports_credentials())
-            .service(web::scope("/api").configure(elections::routes))
+            .service(
+                web::scope("/api")
+                    .configure(elections::routes)
+                    .service(health),
+            )
             .service(web::resource("/ws").to(websocket::route))
-            .service(mount_frontend())
     })
     .bind("0.0.0.0:8080")?
     .run()
     .await
-}
-
-#[cfg(target_os = "freebsd")]
-fn mount_frontend() -> Files {
-    Files::new("/", "frontend").index_file("index.html")
-}
-
-#[cfg(not(target_os = "freebsd"))]
-fn mount_frontend() -> Files {
-    Files::new("/", "frontend/build").index_file("index.html")
 }
