@@ -4,18 +4,24 @@ import VoteBooth from "./components/VoteBooth";
 import ElectionResults from "./components/ElectionResults";
 import Admin from "./components/Admin";
 
+export const Routes = {
+  ElectionResults: "/",
+  VoteBooth: "/votes/:id",
+  Admin: "/secret",
+};
+
 const Router = () => {
   return (
     <Switch>
-      <Route path="/votes/:id" exact>
+      <Route path={Routes.VoteBooth} exact>
         <VoteBooth />
       </Route>
 
-      <Route path="/" exact>
+      <Route path={Routes.ElectionResults} exact>
         <ElectionResults />
       </Route>
 
-      <Route path="/secret" exact>
+      <Route path={Routes.Admin} exact>
         <Admin />
       </Route>
 
